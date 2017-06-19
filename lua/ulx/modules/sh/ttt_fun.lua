@@ -40,9 +40,9 @@ function ulx.credits( calling_ply, target_plys, amount, should_silent )
 	end
 end
 local credits = ulx.command( CATEGORY_NAME, "ulx credits", ulx.credits, "!credits")
-credits:addParam{ type=ULib.cmds.PlayersArg }
-credits:addParam{ type=ULib.cmds.NumArg, hint="Credits", ULib.cmds.round }
-credits:defaultAccess( ULib.ACCESS_SUPERADMIN )
-credits:setOpposite( "ulx silent credits", {_, _, _, true}, "!scredits", true )
-credits:help( "Gives the <target(s)> credits." )
+	credits:addParam{ type=ULib.cmds.PlayersArg }
+	credits:addParam{ type=ULib.cmds.NumArg, hint="Credits", ULib.cmds.round }
+	credits:defaultAccess( ULib.ACCESS_SUPERADMIN )
+	credits:setOpposite( "ulx silent credits", {_, _, _, true}, "!scredits", true )
+	credits:help( "Gives the <target(s)> credits." )
 --[End]----------------------------------------------------------------------------------------

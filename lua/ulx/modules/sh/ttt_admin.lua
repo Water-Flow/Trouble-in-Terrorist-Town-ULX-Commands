@@ -105,8 +105,8 @@ function ulx.slaynr( calling_ply, target_ply, num_slay, should_slaynr )
 	
 		if ulx.getExclusive( target_ply, calling_ply ) then
 			ULib.tsayError( calling_ply, ulx.getExclusive( target_ply, calling_ply ), true )
-		elseif num_slay < 0 then
-			ULib.tsayError( calling_ply, "Invalid integer:\"" .. num_slay .. "\" specified.", true )
+		elseif num_slay <= 0 then
+			ULib.tsayError( calling_ply, "Invalid integer:\"" .. num_slay .. "\" specified. Use rslaynr to remove slays", true )
 		else
 			current_slay = tonumber(target_ply:GetPData("slaynr_slays")) or 0
 			if not should_slaynr then 	
@@ -115,17 +115,10 @@ function ulx.slaynr( calling_ply, target_ply, num_slay, should_slaynr )
                 new_slay = current_slay - num_slay	
             end
 
-            --local slay_reason = reason
-            --if slay_reason == "reason" then
-            --	slay_reason = false
-            --end
-
 			if new_slay > 0 then 		
                 target_ply:SetPData("slaynr_slays", new_slay)
-                --target_ply:SetPData("slaynr_reason", slay_reason) 
             else
 				target_ply:RemovePData("slaynr_slays")
-                --target_ply:RemovePData("slaynr_reason")   
             end
 
 	    	local slays_left 	= tonumber(target_ply:GetPData("slaynr_slays"))  or 0
@@ -144,14 +137,15 @@ function ulx.slaynr( calling_ply, target_ply, num_slay, should_slaynr )
 		end
 	end
 end
+
 local slaynr = ulx.command( CATEGORY_NAME, "ulx slaynr", ulx.slaynr, "!slaynr" )
-slaynr:addParam{ type=ULib.cmds.PlayerArg }
-slaynr:addParam{ type=ULib.cmds.NumArg, max=100, default=1, hint="rounds", ULib.cmds.optional, ULib.cmds.round }
---slaynr:addParam{ type=ULib.cmds.StringArg, hint="reason",  ULib.cmds.optional}
-slaynr:addParam{ type=ULib.cmds.BoolArg, invisible=true }
-slaynr:defaultAccess( ULib.ACCESS_ADMIN )
-slaynr:help( "Slays target(s) for a number of rounds" )
-slaynr:setOpposite( "ulx rslaynr", {_, _, _, true}, "!rslaynr" )
+	slaynr:addParam{ type=ULib.cmds.PlayerArg }
+	slaynr:addParam{ type=ULib.cmds.NumArg, max=100, default=1, hint="rounds", ULib.cmds.optional, ULib.cmds.round }
+	slaynr:addParam{ type=ULib.cmds.BoolArg, invisible=true }
+	slaynr:defaultAccess( ULib.ACCESS_ADMIN )
+	slaynr:help( "Slays target(s) for a number of rounds" )
+	slaynr:setOpposite( "ulx rslaynr", {_, _, _, true}, "!rslaynr" )
+
 --[Helper Functions]---------------------------------------------------------------------------
 hook.Add("TTTBeginRound", "SlayPlayersNextRound", function()
 	local affected_plys = {}
@@ -587,6 +581,16 @@ function ulx.tttspec( calling_ply, target_plys, should_unspec )
 			    v:SetTeam(TEAM_SPEC)
 			    v:ConCommand("ttt_spectator_mode 1")
 			    v:ConCommand("ttt_cl_idlepopup")
+				
+				body = corpse_find( v )
+				CORPSE.SetFound( body, true )
+				v:SetNWBool("body_found", true)
+				
+				if v:GetRole() == ROLE_TRAITOR then
+					-- update innocent's list of traitors
+					SendConfirmedTraitors(GetInnocentFilter(false))
+					SCORE:HandleBodyFound( calling_ply, v )
+				end
 			end
 	    end
 	    if should_unspec then
@@ -609,9 +613,9 @@ ulx.next_round = {}
 local function updateNextround()
 	table.Empty( ulx.next_round ) -- Don't reassign so we don't lose our refs
     
-    table.insert(ulx.next_round,"traitor") -- Add "traitor" to the table.
-    table.insert(ulx.next_round,"detective") -- Add "detective" to the table.	
-    table.insert(ulx.next_round,"unmark") -- Add "unmark" to the table.
+    table.insert(ulx.next_round,"traitor")
+    table.insert(ulx.next_round,"detective")
+    table.insert(ulx.next_round,"unmark")
 
 end
 hook.Add( ULib.HOOK_UCLCHANGED, "ULXNextRoundUpdate", updateNextround )
